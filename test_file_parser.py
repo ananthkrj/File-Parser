@@ -7,7 +7,9 @@ from file_parser import read_lookup_table, parse_flow_logs, copy_output
 class TestFileParser(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        """Create temporary test files for lookup table and flow logs."""
+        """
+        Create temporary test files for lookup table and flow logs.
+        """
         cls.lookup_file = 'test_lookup_table.csv'
         cls.flow_log_file = 'test_flow_logs.txt'
         cls.output_file = 'test_output.txt'
@@ -29,13 +31,17 @@ class TestFileParser(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        """Clean up temporary test files."""
+        """
+        Clean up temporary test files.
+        """
         os.remove(cls.lookup_file)
         os.remove(cls.flow_log_file)
         os.remove(cls.output_file)
 
     def test_read_lookup_table(self):
-        """Test if the lookup table is read correctly."""
+        """
+        Test if the lookup table is read correctly.
+        """
         lookup = read_lookup_table(self.lookup_file)
         expected_lookup = {
             ('25', 'tcp'): 'sv_P1',
@@ -45,7 +51,9 @@ class TestFileParser(unittest.TestCase):
         self.assertEqual(lookup, expected_lookup)
 
     def test_parse_flow_logs(self):
-        """Test if the flow logs are parsed correctly."""
+        """
+        Test if the flow logs are parsed correctly.
+        """
         lookup = read_lookup_table(self.lookup_file)
         tag_counts, port_protocol_counts = parse_flow_logs(self.flow_log_file, lookup)
 
@@ -68,7 +76,9 @@ class TestFileParser(unittest.TestCase):
         self.assertEqual(port_protocol_counts, expected_port_protocol_counts)
 
     def test_copy_output(self):
-        """Test if the output file is generated correctly."""
+        """
+        Test if the output file is generated correctly.
+        """
         lookup = read_lookup_table(self.lookup_file)
         tag_counts, port_protocol_counts = parse_flow_logs(self.flow_log_file, lookup)
         copy_output(self.output_file, tag_counts, port_protocol_counts)
@@ -92,6 +102,37 @@ class TestFileParser(unittest.TestCase):
             "443,tcp,1\n"
         )
         self.assertEqual(output, expected_output)
+    
+    def test_empty_flow_log_file(self):
+        """
+        Test parsing an empty flow log file.
+        """
+        empty_flow_log_file = 'empty_flow_logs.txt'
+        with open(empty_flow_log_file, 'w') as f:
+            pass  # Create an empty file
+
+        lookup = read_lookup_table(self.lookup_file)
+        tag_counts, port_protocol_counts = parse_flow_logs(empty_flow_log_file, lookup)
+
+        # Expected output: No tags or port/protocol combinations
+        self.assertEqual(tag_counts, defaultdict(int))
+        self.assertEqual(port_protocol_counts, defaultdict(int))
+
+        os.remove(empty_flow_log_file)
+    
+    def test_empty_lookup_table_file(self):
+        """
+        Test reading an empty lookup table file.
+        """
+        empty_lookup_file = 'empty_lookup_table.csv'
+        with open(empty_lookup_file, 'w', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(['dstport', 'protocol', 'tag'])  # Header only
+
+        lookup = read_lookup_table(empty_lookup_file)
+        self.assertEqual(lookup, {})
+
+        os.remove(empty_lookup_file)
 
 if __name__ == "__main__":
     unittest.main()
